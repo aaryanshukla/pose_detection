@@ -24,7 +24,6 @@ async function init() {
             if (poses && poses.length > 0) {
                 const keypoints = poses[0].keypoints;
 
-                // const nose = keypoints[0]
 
 
                 // const left_shoulder = keypoints[5];
