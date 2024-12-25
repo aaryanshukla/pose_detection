@@ -9,6 +9,7 @@ function App() {
                 <Route path="/posedetection" element={<PoseDetection />} />
             </Routes>
         </Router>
+        //testing
     );
 }
 
