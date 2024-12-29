@@ -1,36 +1,27 @@
-const { MongoClient } = require("mongodb");
 
-// Replace <cluster-url> with your cluster's host, e.g., "cluster0.mongodb.net"
-// Ensure special characters in the password are URL-encoded. For example, "!" becomes "%21".
+require('dotenv').config();
+const mongoose = require('mongoose');
+const { Schema } = mongoose;
 
-const client = new MongoClient(uri);
+const uri = process.env.MONGODB_URI;
 
-async function run() {
+
+const userSchema = new Schema({
+  username: { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+});
+
+const Users = mongoose.model('Users', userSchema);
+
+async function connectToDB() {
   try {
-    await client.connect();
+    await mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
     console.log("Connected to MongoDB!");
-    
-
-    const database= client.db("Users");
-
-    const collection = database.collection("user_db");
-
-    const doc = { name: "Aaryan Shukla", posture: "curved"};
-
-    const result = await collection.insertOne(doc);
-
-
-    console.log(
-        `A document was inserted with the _id: ${result.insertedId}`,
-     );
-
-
-
   } catch (err) {
     console.error("An error occurred while connecting to MongoDB:", err);
-  } finally {
-    await client.close();
-    console.log("Connection closed.");
   }
 }
-run().catch(console.dir);
+
+module.exports = { Users, connectToDB };
