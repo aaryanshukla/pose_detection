@@ -6,10 +6,12 @@ async function test() {
     await connectToDB();
 
     const newUser = new Users({
-      username: 'aaryan',
-      email: 'aaryan@example.com',
+      username: 'rahul',
+      email: 'rahul@example.com',
       password: 'securepassword123',
     });
+    await newUser.save();
+    
 
     const newHistory = new History({
         username: 'testuser',

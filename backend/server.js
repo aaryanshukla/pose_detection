@@ -1,33 +1,47 @@
 const express = require('express');
 const cors = require('cors');
-const dotenv = require("dotenv");
-const mongoose = require("mongoose");
+const dotenv = require('dotenv');
+const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const User = require('./models/User');
 
-const User = require("./models/User")
-
-// so we have the user schema now we need to implement the logic for the login and signup endpoints 
-
-dotenv.config()
+dotenv.config();
 
 const app = express();
-
-app.use(cors({
-    origin: 'http://localhost:3000' 
-}));
+app.use(cors({ origin: 'http://localhost:3000' }));
 app.use(express.json());
-
 
 const uri = process.env.MONGODB_URI;
 
+// Connect to MongoDB
 mongoose.connect(uri, {
     useNewUrlParser: true,
-    useUnifiedTopology: true
+    useUnifiedTopology: true,
 }).then(() => {
     console.log('Connected to MongoDB');
 }).catch((err) => {
     console.error('MongoDB connection error:', err);
 });
 
+async function migratePasswords() {
+    const users = await User.find();
+    for (const user of users) {
+        if (!user.password.startsWith('$2b$')) { // Only hash plaintext passwords
+            console.log(`Hashing password for user: ${user.email}`);
+            const hashedPassword = await bcrypt.hash(user.password, 10);
+            user.password = hashedPassword;
+            await user.save();
+            console.log(`Updated password for user: ${user.email}`);
+        } else {
+            console.log(`Password already hashed for user: ${user.email}`);
+        }
+    }
+    console.log("Password migration completed!");
+}
+
+
+migratePasswords();
 
 app.post("/signup", async (req, res) => {
     try {
@@ -40,7 +54,7 @@ app.post("/signup", async (req, res) => {
         const newUser = new User({
             username, 
             email, 
-            passwordHash
+            password
         });
         await newUser.save();
 
@@ -50,34 +64,36 @@ app.post("/signup", async (req, res) => {
     }
 })
 
-
 app.post("/login", async (req, res) => {
-
     try {
+        const { email, password } = req.body;
 
-        const {email, password} = req.body;
-
-        const checkUser = User.findOne({email: email})
-
-        if (!checkUser) {
-            return res.status(404).json({error: "User not found"});
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
         }
 
-        const checkPassword = await bcrypt.compare(password, user.password)
+        console.log("Password entered by user:", password);
+        console.log("Hashed password from database:", user.password);
 
-        if(!checkPassword) {
-            return res.status(401).json({error: "Invalid Credentials"});
+        const isPasswordCorrect = await bcrypt.compare(password, user.password);
+        console.log("Password match result:", isPasswordCorrect);
 
+        if (!isPasswordCorrect) {
+            return res.status(401).json({ error: "Invalid credentials" });
         }
+        const webtoken = process.env.JWT_SECRET
 
-        res.status(200).json({message: "Login successful"});
-
-    } catch(error) {
-        console.error('Error during login', error);
+        const token = jwt.sign({ userId: user._id }, webtoken, { expiresIn: "1h" });
+        res.status(200).json({ message: "Login successful", token });
+    } catch (error) {
+        console.error("Error during login:", error);
+        res.status(500).json({ error: "Internal server error" });
     }
+});
 
-})
 
-app.listen(8000, () => {
-    console.log('Server is running on port 8000.');
+
+app.listen(5000, () => {
+    console.log('Server is running on port 5000.');
 });
