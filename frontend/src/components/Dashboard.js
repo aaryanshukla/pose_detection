@@ -1,3 +1,7 @@
 import { useState } from 'react';
 
-function dashboardView
+export default function DashboardView() {
+    return (
+        <h1>Hey</h1>
+    )
+}

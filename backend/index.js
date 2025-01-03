@@ -13,7 +13,16 @@ const userSchema = new Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
+const historySchema = new Schema({
+    username: {type: String, required: true},
+    timesUsed: {type: Number, required: true, default: 0},
+    notes: {type: String, default: "N/A"}
+
+});
+
 const Users = mongoose.model('Users', userSchema);
+
+const History = mongoose.model('History', historySchema)
 
 async function connectToDB() {
   try {
@@ -24,4 +33,4 @@ async function connectToDB() {
   }
 }
 
-module.exports = { Users, connectToDB };
+module.exports = {Users, History, connectToDB };
