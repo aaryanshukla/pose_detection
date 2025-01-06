@@ -30,6 +30,7 @@ function Login() {
     }
 
     return (
+        <>
         <form onSubmit = {handleLogin}>
             <div>
                 <label>
@@ -53,6 +54,7 @@ function Login() {
             </div>
             
         </form>
+    </>
 
     )
 }
