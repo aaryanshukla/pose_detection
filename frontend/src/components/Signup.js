@@ -9,6 +9,7 @@ import logo from "./logo.png";
 import Image from "react-bootstrap/Image";
 import Form from "react-bootstrap/Form";
 import Card from "react-bootstrap/Card";
+import "./styles.css";
 
 function Signup() {
   const [username, setUsername] = useState("");
@@ -16,6 +17,11 @@ function Signup() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
+
+  const routeChange = () =>{
+    let path = "/login"
+    navigate(path)
+  }
 
   async function handleSignup(e) {
     e.preventDefault();
@@ -36,6 +42,7 @@ function Signup() {
         console.log("Error with Signup: ", data.error);
       } else {
         console.log("Successfully Signed Up");
+
         navigate("/login");
       }
     } catch (error) {
@@ -45,97 +52,73 @@ function Signup() {
 
   return (
     <>
-    <Container
-  className="text-center my-4"
-  style={{
-    backgroundColor: "#ffffff",
-    padding: "20px",
-    borderRadius: "10px",
-    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-  }}
->
-  <h1
-    style={{
-      fontFamily: "'Roboto', sans-serif",
-      color: "#333",
-      fontSize: "2.5rem",
-      marginBottom: "10px",
-    }}
-  >
-    Pose-Detector
-  </h1>
+      <Container className="custom-container text-center my-4">
+        <h1>Pose-Detector</h1>
 
-  <Image
-    src={logo}
-    alt="Pose-Detector Logo"
-    fluid
-    style={{
-      maxHeight: "150px",
-      maxWidth: "100%",
-    }}
-  />
-</Container>
+        <Image src={logo} alt="Pose-Detector Logo" fluid />
+      </Container>
 
-    
-    
-    <div
-      style={{
-        minHeight: "50 vh",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: "#f8f9fa",
-      }}
-    >
+      <div
+        style={{
+          minHeight: "50 vh",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "#f8f9fa",
+        }}
+      >
+        <Card className="custom-card p-4 shadow" style={{ width: "25rem" }}>
+          <div className="text-center">
+            <Button variant="primary" size="lg" type="submit" onClick={routeChange}>
+              Already A Member, Head to the Login Page!
+            </Button>
+          </div>
+          <Card.Body>
+            <Card.Title className="text-center mb-4">Please Signup!</Card.Title>
+            <Form onSubmit={handleSignup}>
+              <Form.Group className="mb-3" controlId="formUsername">
+                <Form.Label>Username</Form.Label>
+                <Form.Control
+                  type="text"
+                  placeholder="Enter your username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                />
+              </Form.Group>
 
+              <Form.Group className="form-control mb-3" controlId="formEmail">
+                <Form.Label>Email</Form.Label>
+                <Form.Control
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </Form.Group>
 
-      <Card className="p-4 shadow" style={{ width: "25rem" }}>
-        <Card.Body>
-          <Card.Title className="text-center mb-4">Signup</Card.Title>
-          <Form onSubmit={handleSignup}>
-            <Form.Group className="mb-3" controlId="formUsername">
-              <Form.Label>Username</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Enter your username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-              />
-            </Form.Group>
+              <Form.Group className="form-control mb-3" controlId="formPassword">
+                <Form.Label>Password</Form.Label>
+                <Form.Control
+                  type="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </Form.Group>
 
-            <Form.Group className="mb-3" controlId="formEmail">
-              <Form.Label>Email</Form.Label>
-              <Form.Control
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </Form.Group>
+              <div className="custom-button text-center">
+                <Button variant="primary" size="lg" type="submit">
+                  Signup
+                </Button>
+              </div>
 
-            <Form.Group className="mb-3" controlId="formPassword">
-              <Form.Label>Password</Form.Label>
-              <Form.Control
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </Form.Group>
-
-            <div className="text-center">
-              <Button variant="primary" size="lg" type="submit">
-                Signup
-              </Button>
-            </div>
-
-            {error && <p className="text-danger text-center mt-3">{error}</p>}
-          </Form>
-        </Card.Body>
-      </Card>
-    </div>
-  </>
+              {error && <p className="text-danger text-center mt-3">{error}</p>}
+            </Form>
+          </Card.Body>
+        </Card>
+      </div>
+    </>
   );
 }
 

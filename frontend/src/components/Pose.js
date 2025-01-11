@@ -1,94 +1,128 @@
 import React, { useEffect, useRef } from 'react';
-import * as tf from '@tensorflow/tfjs';
-import * as poseDetection from '@tensorflow-models/pose-detection';
 import '@tensorflow/tfjs-backend-webgl';
+import {
+  PoseLandmarker,
+  FilesetResolver,
+  DrawingUtils
+} from 'https://cdn.skypack.dev/@mediapipe/tasks-vision@0.10.0';
 
 function PoseDetection() {
-    const videoRef = useRef(null);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  let poseLandmarker;
 
-    useEffect(() => {
-        let detector;
-        let lastTime = 0;
-        const interval = 100;
+  useEffect(() => {
+    let webcamRunning = false;
 
-        async function init() {
-            try {
-                await tf.setBackend('webgl');
-                await tf.ready();
+    async function initializePoseLandmarker() {
+      try {
+        const vision = await FilesetResolver.forVisionTasks(
+          'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm'
+        );
+        poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
+          baseOptions: {
+            modelAssetPath: `https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task`,
+            delegate: 'GPU',
+          },
+          runningMode: 'VIDEO',
+          numPoses: 1,
+        });
+      } catch (error) {
+        console.error('Error initializing PoseLandmarker:', error);
+      }
+    }
 
-                console.log('Using backend:', tf.getBackend()); 
+    async function enableWebcam() {
+      const constraints = {
+        video: { width: 640, height: 480 },
+      };
 
-                const videoElement = videoRef.current;
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { width: 640, height: 480 },
-                });
-                videoElement.srcObject = stream;
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        const videoElement = videoRef.current;
+        videoElement.srcObject = stream;
 
-                const model = poseDetection.SupportedModels.MoveNet;
-                const detectorConfig = { modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING };
-                detector = await poseDetection.createDetector(model, detectorConfig);
-            } catch (error) {
-                console.error('Error initializing webcam or detector:', error);
-            }
-        }
-
-        async function detectPose() {
-            const now = performance.now();
-            if (now - lastTime > interval && detector) {
-                const videoElement = videoRef.current;
-                try {
-                    const poses = await detector.estimatePoses(videoElement);
-                    if (poses && poses.length > 0) {
-                        const keypoints = poses[0].keypoints;
-
-                        const nose = keypoints[0];
-                        const leftShoulder = keypoints[5];
-                        const rightShoulder = keypoints[6];
-                        const leftHip = keypoints[11];
-                        const rightHip = keypoints[12];
-
-                        const verticalDiffLeft = leftShoulder.y - leftHip.y;
-                        const verticalDiffRight = rightShoulder.y - rightHip.y;
-                        const horizontalDiffLeft = leftShoulder.x - leftHip.x;
-                        const horizontalDiffRight = rightShoulder.x - rightHip.x;
-
-                        if (verticalDiffLeft < 8 || verticalDiffRight < 8) {
-                            console.log('Raise your shoulders');
-                        }
-
-                        if (horizontalDiffLeft < 8 || horizontalDiffRight < 8) {
-                            console.log('Sit straight');
-                        }
-
-                        console.log(
-                            'Keypoints summary:',
-                            keypoints.map((k) => `${k.name}: (${k.x}, ${k.y}, ${k.score})`)
-                        );
-                    }
-                } catch (error) {
-                    console.error('Error detecting pose:', error);
-                }
-
-                lastTime = now;
-            }
-
-            requestAnimationFrame(detectPose);
-        }
-
-        videoRef.current.onloadeddata = () => detectPose();
-
-        init();
-
-        return () => {
-            if (detector) detector.dispose();
+        videoElement.onloadeddata = () => {
+          webcamRunning = true;
+          startPoseDetection();
         };
-    }, []);
+      } catch (error) {
+        console.error('Error accessing webcam:', error);
+      }
+    }
 
-    return (
-        <div>
-            <video ref={videoRef} autoPlay playsInline width="640" height="480" />
-        </div>
-    );
+    async function startPoseDetection() {
+      const canvas = canvasRef.current;
+      const canvasCtx = canvas.getContext('2d');
+      const videoElement = videoRef.current;
+
+      canvas.width = videoElement.videoWidth;
+      canvas.height = videoElement.videoHeight;
+
+      async function detectPose() {
+        if (webcamRunning) {
+          const now = performance.now();
+          const results = await poseLandmarker.detectForVideo(videoElement, now);
+
+          canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+
+          if (results.landmarks && results.landmarks.length > 0) {
+            const drawingUtils = new DrawingUtils(canvasCtx);
+            for (const landmarks of results.landmarks) {
+              drawingUtils.drawLandmarks(landmarks, {
+                radius: (data) => DrawingUtils.lerp(data.from.z, -0.15, 0.1, 5, 1),
+              });
+              drawingUtils.drawConnectors(
+                landmarks,
+                PoseLandmarker.POSE_CONNECTIONS
+              );
+            }
+          }
+
+          requestAnimationFrame(detectPose);
+        }
+      }
+
+      detectPose();
+    }
+
+    initializePoseLandmarker();
+    enableWebcam();
+
+    return () => {
+      if (poseLandmarker) poseLandmarker.close();
+      webcamRunning = false;
+    };
+  }, []);
+
+  return (
+    <div style={{ position: 'relative', width: '640px', height: '480px' }}>
+
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+        }}
+      />
+      <canvas
+        ref={canvasRef}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          pointerEvents: 'none',
+        }}
+      />
+    </div>
+  );
 }
 
 export default PoseDetection;
