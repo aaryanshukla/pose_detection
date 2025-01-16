@@ -1,47 +1,54 @@
 const mongoose = require('mongoose'); 
 const { Users, History, connectToDB } = require('./index'); 
+const PostureData = require('./models/PostureData'); // Import the PostureData model
 
 async function test() {
   try {
     await connectToDB();
 
     const newUser = new Users({
-      username: 'rahul',
-      email: 'rahul@example.com',
-      password: 'securepassword123',
+      username: 'john_doe',
+      email: 'john.doe@example.com',
+      password: 'strongpassword456',
     });
-    await newUser.save();
     
-
-    const newHistory = new History({
-        username: 'testuser',
-        timesUsed: 3,
-        notes: "Patient has good posture"
-    })
-
     const savedUser = await newUser.save();
     console.log("User saved successfully:", savedUser);
 
+    const newPostureData = new PostureData({
+      userId: savedUser._id, 
+      postureStatus: 'Good',
+      landmarks: [
+        { x: 0.5, y: 0.3, z: 0.0, name: 'nose', score: 0.98 },
+        { x: 0.4, y: 0.4, z: 0.1, name: 'left_shoulder', score: 0.90 },
+      ],
+      notes: "The user has consistent good posture.",
+    });
+    const savedPostureData = await newPostureData.save();
+    console.log("Posture data saved successfully:", savedPostureData);
+
+    const newHistory = new History({
+      username: 'rahul',
+      timesUsed: 3,
+      notes: "Patient has good posture",
+    });
     const saveHistory = await newHistory.save();
-    console.log("User saved successfully:", saveHistory);
+    console.log("History saved successfully:", saveHistory);
 
-    const user = await Users.findOne({ username: 'testuser' });
-    console.log("User found:", user);
+    const postureData = await PostureData.findOne({ userId: savedUser._id });
+    console.log("Posture data found:", postureData);
 
-    const historyUser = await History.findOne({ username: 'testuser' });
-    console.log("User found:", historyUser);
-
-    const updatedUser = await Users.findOneAndUpdate(
-      { username: 'testuser' },
-      { email: 'newemail@example.com' },
+    const updatedPostureData = await PostureData.findOneAndUpdate(
+      { userId: savedUser._id },
+      { notes: "Posture improved over time." },
       { new: true } 
     );
-    console.log("User updated:", updatedUser);
+    console.log("Posture data updated:", updatedPostureData);
 
-    // // Test: Delete user
-    // const deletedUser = await Users.deleteOne({ username: 'testuser' });
-    // console.log("User deleted:", deletedUser);
+    const historyUser = await History.findOne({ username: 'rahul' });
+    console.log("History found:", historyUser);
 
+  
   } catch (err) {
     console.error("Error during testing:", err);
   } finally {

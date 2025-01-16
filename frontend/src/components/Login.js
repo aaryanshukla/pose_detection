@@ -11,10 +11,12 @@ import Form from "react-bootstrap/Form";
 import Card from "react-bootstrap/Card";
 import "./styles.css";
 
+
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   async function handleLogin(e) {
     e.preventDefault();
@@ -26,12 +28,20 @@ function Login() {
         body: JSON.stringify({ email, password }),
       });
 
+
+  
       const data = await response.json();
+
+      console.log(data)
 
       if (!response.ok) {
         console.error("Error with Login:", data.error);
       } else {
+        const token = data.token;
+        localStorage.setItem("token", token);
         console.log("Successfully logged in!");
+        navigate("/dashboard")
+
       }
     } catch (error) {
       setError("Network Error, Please Try Again");
@@ -61,23 +71,26 @@ function Login() {
             <Form onSubmit={handleLogin}>
               <Form.Group className="form-control mb-3" controlId="formBasicEmail">
                 <Form.Label>
-                  Enter Email
+                  Email
                   <Form.Control
                     type="email"
                     placeholder="Enter Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                   ></Form.Control>
                 </Form.Label>
               </Form.Group>
               <Form.Group className="form-control mb-3" controlId="formBasicPassword">
                 <Form.Label>
-                  Enter Password
+                  Password
                   <Form.Control
                     type="password"
                     placeholder="Enter Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                   ></Form.Control>
                 </Form.Label>
               </Form.Group>
-              `{" "}
               <div className="custom-button text-center">
                 <Button variant="primary" size="lg" type="submit">
                   Login

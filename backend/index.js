@@ -20,9 +20,18 @@ const historySchema = new Schema({
 
 });
 
+const PostureDataSchema = new Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' ,required: true, unique: true },
+  landmarks: {type: Array, required: true},
+  notes: {type: Array, required: true}
+});
+
+
 const Users = mongoose.model('Users', userSchema);
 
 const History = mongoose.model('History', historySchema)
+
+const PostureData = mongoose.model('PostureData', PostureDataSchema)
 
 async function connectToDB() {
   try {
@@ -33,4 +42,4 @@ async function connectToDB() {
   }
 }
 
-module.exports = {Users, History, connectToDB };
+module.exports = {Users, History, PostureData, connectToDB };
