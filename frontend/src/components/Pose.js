@@ -13,6 +13,8 @@ function PoseDetection() {
   const poseLandmarkerRef = useRef(null);
   const [poseLandmarkerReady, setPoseLandmarkerReady] = useState(false); // Track readiness
   const webcamRunning = useRef(false);
+  const lastSavedTimestamp = useRef(Date.now());
+
 
   const POSE_LANDMARKS = [
     "nose",
@@ -115,7 +117,11 @@ function PoseDetection() {
 
           const poseNotes = analyzePosture(results);
 
-          saveResults(poseResults, poseNotes);
+          const currentTimestamp = Date.now();
+          if (currentTimestamp - lastSavedTimestamp.current >= 60000) { 
+            saveResults(poseResults, poseNotes);
+            lastSavedTimestamp.current = currentTimestamp; 
+          }
 
           canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -201,7 +207,10 @@ function PoseDetection() {
     console.log("Extracted userId:", userId);
       const response = await fetch("http://localhost:5000/posedetection", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
         body: JSON.stringify({ poseResults, poseNotes, userId }),
       });
 

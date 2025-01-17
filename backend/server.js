@@ -153,27 +153,47 @@ app.post('/dashboard', validateToken, async (req, res) => {
 
 
 
-app.post('/posedetection', async(req, res) => {
-    // need to save the results for when a user uses the pose detection 
-    try {
-      const {poseResults, poseNotes, userId} = req.body
 
-      const newPosture = new PostureData({
-        userId: userId,
-        notes: poseNotes,
-        landmarks: poseResults
-      });
+app.post('/posedetection', async (req, res) => {
+  try {
+    const { poseResults, poseNotes, userId } = req.body;
 
-      await newPosture.save();
+    const objectUserId = new mongoose.Types.ObjectId(userId);
 
+    console.log('PoseDetection endpoint hit');
+    console.log('Query:', { userId: objectUserId });
+    console.log('Update Data:', {
+      notes: poseNotes,
+      landmarks: poseResults,
+      timestamp: new Date(),
+    });
 
+    const updatedPosture = await PostureData.findOneAndUpdate(
+      { userId: objectUserId }, 
+      {
+        $set: {
+          notes: poseNotes,
+          landmarks: poseResults,
+          timestamp: new Date(), 
+        },
+      },
+      { upsert: true, new: true, runValidators: true } 
+    );
+    
 
-    } catch (error) {
-      console.error('Error retrieving data:', error);
-      res.status(500).json({ error: 'Internal server error' });
+    console.log('Updated Posture:', updatedPosture);
 
+    if (!updatedPosture) {
+      return res.status(404).json({ message: 'Posture data not found or created.' });
     }
+
+    res.status(200).json({ message: 'Pose data saved successfully.', data: updatedPosture });
+  } catch (error) {
+    console.error('Error saving pose data:', error);
+    res.status(500).json({ error: 'Internal server error.' });
+  }
 });
+
   
 
 app.listen(5000, () => {
