@@ -73,7 +73,6 @@ app.post('/signup', async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
-    // Normalize email
     const normalizedEmail = email.trim().toLowerCase();
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -156,14 +155,14 @@ app.post('/dashboard', validateToken, async (req, res) => {
 
 app.post('/posedetection', async (req, res) => {
   try {
-    const { poseResults, poseNotes, userId } = req.body;
+    const { poseResults, newNotes, userId } = req.body;
 
     const objectUserId = new mongoose.Types.ObjectId(userId);
 
     console.log('PoseDetection endpoint hit');
     console.log('Query:', { userId: objectUserId });
     console.log('Update Data:', {
-      notes: poseNotes,
+      notes: newNotes,
       landmarks: poseResults,
       timestamp: new Date(),
     });
@@ -172,7 +171,7 @@ app.post('/posedetection', async (req, res) => {
       { userId: objectUserId }, 
       {
         $set: {
-          notes: poseNotes,
+          notes: newNotes,
           landmarks: poseResults,
           timestamp: new Date(), 
         },

@@ -7,14 +7,15 @@ import {
   DrawingUtils
 } from 'https://cdn.skypack.dev/@mediapipe/tasks-vision@0.10.0';
 
-function PoseDetection() {
+function PoseDetection({onPoseNotesUpdate} ) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const poseLandmarkerRef = useRef(null);
   const [poseLandmarkerReady, setPoseLandmarkerReady] = useState(false); // Track readiness
   const webcamRunning = useRef(false);
-  const lastSavedTimestamp = useRef(Date.now());
-
+  const lastSavedTimestamp = useRef(Date.now()); 
+  const [poseNotes, setPoseNotes] = useState(null);
+  
 
   const POSE_LANDMARKS = [
     "nose",
@@ -49,6 +50,11 @@ function PoseDetection() {
     "left_foot_index",
     "right_foot_index"
   ];
+
+  const updatePoseNotes = (newNotes) => {
+    setPoseNotes(newNotes);
+    onPoseNotesUpdate(newNotes);
+  }
 
   useEffect(() => {
     async function initializePoseLandmarker() {
@@ -115,11 +121,14 @@ function PoseDetection() {
 
           const poseResults = logLandmarks(results);
 
-          const poseNotes = analyzePosture(results);
+          const newNotes = analyzePosture(results);
+          
+          updatePoseNotes(newNotes);
+          
 
           const currentTimestamp = Date.now();
           if (currentTimestamp - lastSavedTimestamp.current >= 60000) { 
-            saveResults(poseResults, poseNotes);
+            saveResults(poseResults, newNotes);
             lastSavedTimestamp.current = currentTimestamp; 
           }
 
@@ -158,7 +167,6 @@ function PoseDetection() {
   function logLandmarks(results) {
     if (results.landmarks && results.landmarks.length > 0) {
       const landmarks = results.landmarks[0];
-      console.log("Detected Landmarks:");
       landmarks.forEach((landmark, index) => {
         const landmarkName = POSE_LANDMARKS[index];
         const { x, y, z } = landmark;
@@ -192,7 +200,7 @@ function PoseDetection() {
     return { alerts: feedback, isGoodPosture };
   }
 
-  async function saveResults(poseResults, poseNotes) {
+  async function saveResults(poseResults, newNotes) {
     
     try {
 
@@ -211,7 +219,7 @@ function PoseDetection() {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify({ poseResults, poseNotes, userId }),
+        body: JSON.stringify({ poseResults, newNotes, userId }),
       });
 
       
@@ -226,31 +234,47 @@ function PoseDetection() {
   }
 
   return (
-    <div style={{ position: 'relative', width: '640px', height: '480px' }}>
-      <video
-        ref={videoRef}
-        autoPlay
-        playsInline
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-        }}
-      />
-      <canvas
-        ref={canvasRef}
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          pointerEvents: 'none',
-        }}
-      />
-    </div>
+    <>
+      <h1 style={{ position: 'relative', zIndex: 2 }}>Hey my name is Aaryan</h1>
+      <div style={{ position: 'relative', width: '640px', height: '480px', overflow: 'hidden' }}>
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            zIndex: 1,
+          }}
+        />
+        <canvas
+          ref={canvasRef}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+            zIndex: 1,
+          }}
+        />
+      </div>
+      {poseNotes && (
+        <div style={{ marginTop: '20px', color: 'black', position: 'relative', zIndex: 2 }}>
+          <h2>Pose Notes:</h2>
+          <ul>
+            {poseNotes.alerts.map((alert, index) => (
+              <li key={index}>{alert}</li>
+            ))}
+          </ul>
+          <p>{poseNotes.isGoodPosture ? "Good posture!" : "Needs improvement."}</p>
+        </div>
+      )}
+    </>
   );
 }
 

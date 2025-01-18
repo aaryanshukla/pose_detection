@@ -15,9 +15,10 @@ function Dashboard() {
     const [error, setError] = useState(null);
     const [isLoading, setIsLoading] = useState(true); 
     const navigate = useNavigate();
+    const [livePoseNotes, setLivePoseNotes] = useState(null);
   
     async function handleDashboard() {
-      const token = localStorage.getItem('token'); // Retrieve the token stored after login
+      const token = localStorage.getItem('token'); 
 
       try {
         if (!token) {
@@ -46,6 +47,11 @@ function Dashboard() {
       } finally {
         setIsLoading(false); 
       }
+    }
+
+    const handlePoseNotesUpdate = (poseNotes) => {
+      console.log("Live Pose Notes", poseNotes);
+      setLivePoseNotes(poseNotes);
     }
 
     useEffect(() => {
