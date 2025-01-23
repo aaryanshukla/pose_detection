@@ -124,6 +124,7 @@ function PoseDetection({onPoseNotesUpdate} ) {
           const newNotes = analyzePosture(results);
           
           updatePoseNotes(newNotes);
+          onPoseNotesUpdate(newNotes);
           
 
           const currentTimestamp = Date.now();
@@ -263,17 +264,6 @@ function PoseDetection({onPoseNotesUpdate} ) {
           }}
         />
       </div>
-      {poseNotes && (
-        <div style={{ marginTop: '20px', color: 'black', position: 'relative', zIndex: 2 }}>
-          <h2>Pose Notes:</h2>
-          <ul>
-            {poseNotes.alerts.map((alert, index) => (
-              <li key={index}>{alert}</li>
-            ))}
-          </ul>
-          <p>{poseNotes.isGoodPosture ? "Good posture!" : "Needs improvement."}</p>
-        </div>
-      )}
     </>
   );
 }
