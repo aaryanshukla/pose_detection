@@ -150,9 +150,6 @@ app.post('/dashboard', validateToken, async (req, res) => {
   }
 });
 
-
-
-
 app.post('/posedetection', async (req, res) => {
   try {
     const { poseResults, newNotes, userId } = req.body;
@@ -192,8 +189,6 @@ app.post('/posedetection', async (req, res) => {
     res.status(500).json({ error: 'Internal server error.' });
   }
 });
-
-  
 
 app.listen(5000, () => {
   console.log('Server is running on port 5000.');

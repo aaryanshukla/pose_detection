@@ -7,7 +7,7 @@ import {
   DrawingUtils
 } from 'https://cdn.skypack.dev/@mediapipe/tasks-vision@0.10.0';
 
-function PoseDetection({onPoseNotesUpdate} ) {
+function PoseDetection({onPoseNotesUpdate, onPoseResultsUpdate}) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const poseLandmarkerRef = useRef(null);
@@ -15,6 +15,8 @@ function PoseDetection({onPoseNotesUpdate} ) {
   const webcamRunning = useRef(false);
   const lastSavedTimestamp = useRef(Date.now()); 
   const [poseNotes, setPoseNotes] = useState(null);
+  const [poseResults, setPoseResults] = useState(null);
+  
   
 
   const POSE_LANDMARKS = [
@@ -54,6 +56,12 @@ function PoseDetection({onPoseNotesUpdate} ) {
   const updatePoseNotes = (newNotes) => {
     setPoseNotes(newNotes);
     onPoseNotesUpdate(newNotes);
+  }
+
+  const updatePoseResults = (poseResults) => {
+    setPoseResults(poseResults)
+    onPoseResultsUpdate(poseResults)
+
   }
 
   useEffect(() => {
@@ -125,6 +133,8 @@ function PoseDetection({onPoseNotesUpdate} ) {
           
           updatePoseNotes(newNotes);
           onPoseNotesUpdate(newNotes);
+          updatePoseResults(poseResults);
+          onPoseResultsUpdate(poseResults);
           
 
           const currentTimestamp = Date.now();
